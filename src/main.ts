@@ -1,73 +1,116 @@
-import type {
-  ArrayElement,
-  AttackSpell,
-  HousePoints,
-  NewWizard,
-  NonHealingCategory,
-  Spell,
-  SpellOutput,
-  Wizard,
-  WizardSummary,
-  WizardUpdate
-} from "./types";
+import assert from "node:assert/strict";
+import "./type-examples";
+import { WizardRepository } from "./wizard-repository";
+import type { NewWizard, WizardUpdate } from "./types";
 
-const newWizard: NewWizard = {
+const wizards = new WizardRepository();
+
+const harryData: NewWizard = {
   name: "Harry Potter",
   house: "Gryffindor",
   level: 5,
   active: true,
   attributes: {
-    patronus: "Stag",
-    quidditchPlayer: true
+    patronus: "Stag"
   }
 };
 
-const wizard: Wizard = {
-  ...newWizard,
-  id: 1
-};
+const harry = wizards.create(harryData);
 
-const wizardSummary: WizardSummary = {
-  id: wizard.id,
-  name: wizard.name,
-  house: wizard.house
-};
+const hermione = wizards.create({
+  name: "Hermione Granger",
+  house: "Gryffindor",
+  level: 8,
+  active: true
+});
+
+const draco = wizards.create({
+  name: "Draco Malfoy",
+  house: "Slytherin",
+  level: 6,
+  active: true
+});
+
+assert.deepEqual(
+  [harry.id, hermione.id, draco.id],
+  [1, 2, 3]
+);
+
+const gryffindorWizards = wizards.findByHouse("Gryffindor");
+
+assert.deepEqual(
+  gryffindorWizards.map(wizard => wizard.name),
+  ["Harry Potter", "Hermione Granger"]
+);
+
+assert.deepEqual(wizards.findByHouse("Ravenclaw"), []);
 
 const wizardUpdate: WizardUpdate = {
   level: 6
 };
 
-const attackSpell: AttackSpell = {
-  id: 101,
-  name: "Expelliarmus",
-  category: "attack",
-  power: 80
-};
+assert.equal(wizards.update(harry.id, wizardUpdate), true);
+assert.equal(wizards.findById(harry.id)?.level, 6);
+assert.equal(wizards.findById(harry.id)?.id, harry.id);
+assert.equal(wizards.update(999, wizardUpdate), false);
+assert.equal(wizards.findById(999), undefined);
 
-const spellCollection: Spell[] = [attackSpell];
+assert.throws(
+  () => wizards.add(harry),
+  /already exists/
+);
 
-const firstSpell: ArrayElement<typeof spellCollection> = attackSpell;
+assert.equal(wizards.getAll().length, 3);
 
-const housePoints: HousePoints = {
-  Gryffindor: 100,
-  Slytherin: 80,
-  Ravenclaw: 90,
-  Hufflepuff: 70
-};
+harryData.name = "Changed outside the repository";
+harry.name = "Changed returned wizard";
 
-const attackOutput: SpellOutput<"attack"> = attackSpell.power;
-const defenseOutput: SpellOutput<"defense"> = true;
-const healingOutput: SpellOutput<"healing"> = "Health restored";
+assert.equal(wizards.findById(harry.id)?.name, "Harry Potter");
 
-const nonHealingCategory: NonHealingCategory = "defense";
+const retrievedHarry = wizards.findById(harry.id);
 
-console.log("Hogwarts Academy");
-console.log("Wizard:", wizardSummary);
-console.log("Wizard attributes:", wizard.attributes);
-console.log("Proposed update:", wizardUpdate);
-console.log("Spell:", firstSpell);
-console.log("House points:", housePoints);
-console.log("Attack output:", attackOutput);
-console.log("Defense output:", defenseOutput);
-console.log("Healing output:", healingOutput);
-console.log("Non-healing category:", nonHealingCategory);
+assert.ok(retrievedHarry);
+assert.ok(retrievedHarry.attributes);
+
+retrievedHarry.attributes.patronus = "Changed patronus";
+
+assert.equal(
+  wizards.findById(harry.id)?.attributes?.patronus,
+  "Stag"
+);
+
+const retrievedWizards = wizards.getAll();
+
+retrievedWizards.length = 0;
+
+assert.equal(wizards.getAll().length, 3);
+
+wizards.add({
+  id: 10,
+  name: "Luna Lovegood",
+  house: "Ravenclaw",
+  level: 7,
+  active: true
+});
+
+const neville = wizards.create({
+  name: "Neville Longbottom",
+  house: "Gryffindor",
+  level: 4,
+  active: true
+});
+
+assert.equal(neville.id, 11);
+
+const identifiers = wizards.getAll().map(wizard => wizard.id);
+
+assert.equal(new Set(identifiers).size, identifiers.length);
+
+console.log("\n--- Wizard repository ---");
+console.log("Identifiers:", identifiers);
+console.log(
+  "Gryffindor:",
+  wizards.findByHouse("Gryffindor").map(wizard => wizard.name)
+);
+console.log("Harry's level:", wizards.findById(1)?.level);
+console.log("All wizard repository checks passed.");
