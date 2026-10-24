@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import "./type-examples";
 import { WizardRepository } from "./wizard-repository";
-import type { NewWizard, WizardUpdate } from "./types";
+import { getSpellEvents, handleSpellCast } from "./event-handler";
+import type {
+  AcademyEvent,
+  NewWizard,
+  WizardUpdate
+} from "./types";
 
 const wizards = new WizardRepository();
 
@@ -114,3 +119,63 @@ console.log(
 );
 console.log("Harry's level:", wizards.findById(1)?.level);
 console.log("All wizard repository checks passed.");
+
+const events: AcademyEvent[] = [
+  {
+    type: "spell-cast",
+    wizardId: harry.id,
+    spellName: "Expelliarmus"
+  },
+  {
+    type: "level-up",
+    wizardId: hermione.id,
+    newLevel: 9
+  },
+  {
+    type: "wizard-expelled",
+    wizardId: draco.id
+  },
+  {
+    type: "spell-cast",
+    wizardId: hermione.id,
+    spellName: "Lumos"
+  }
+];
+
+const originalEvents = structuredClone(events);
+const spellEvents = getSpellEvents(events);
+const spellMessages = spellEvents.map(handleSpellCast);
+
+assert.equal(spellEvents.length, 2);
+
+assert.deepEqual(
+  spellEvents.map(event => event.type),
+  ["spell-cast", "spell-cast"]
+);
+
+assert.deepEqual(spellMessages, [
+  "Wizard #1 cast Expelliarmus",
+  "Wizard #2 cast Lumos"
+]);
+
+assert.deepEqual(events, originalEvents);
+assert.deepEqual(getSpellEvents([]), []);
+
+assert.deepEqual(
+  getSpellEvents([
+    {
+      type: "level-up",
+      wizardId: hermione.id,
+      newLevel: 9
+    }
+  ]),
+  []
+);
+
+console.log("\n--- Spell events ---");
+
+for (const message of spellMessages) {
+  console.log(message);
+}
+
+console.log("All spell event checks passed.");

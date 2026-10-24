@@ -58,6 +58,11 @@ export type AcademyEvent =
       wizardId: number;
     };
 
+export type SpellCastEvent = Extract<
+  AcademyEvent,
+  { type: "spell-cast" }
+>;
+
 export type HousePoints = Record<House, number>;
 
 export type SpellOutput<Category extends SpellCategory> =
