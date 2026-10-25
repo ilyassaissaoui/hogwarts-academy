@@ -30,7 +30,7 @@ export function runSpellExamples(): void {
       category: "attack",
       power: -10
     }),
-
+    /Spell power cannot be negative/
   );
 
   assert.equal(spells.findById(103), undefined);
@@ -43,7 +43,7 @@ export function runSpellExamples(): void {
       category: "healing",
       power: Number.NaN
     }),
-
+    /Spell power must be finite/
   );
 
   assert.throws(
@@ -53,7 +53,7 @@ export function runSpellExamples(): void {
       category: "attack",
       power: Number.POSITIVE_INFINITY
     }),
-
+    /Spell power must be finite/
   );
 
   assert.throws(
@@ -63,7 +63,7 @@ export function runSpellExamples(): void {
       category: "defense",
       power: 20
     }),
-
+    /already exists/
   );
 
   assert.equal(spells.findById(104), undefined);
